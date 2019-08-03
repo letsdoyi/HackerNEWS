@@ -110,29 +110,26 @@
         newsNumController.end += newsNumController.numberOfNEWS;
       }
     };
-  
+
     $date.textContent = `${Date()}`;
 
     function getNews(start, end) {
-      let getNewsIDList = () => {
+      function getNewsIDList() {
         return new Promise(function (resolve, reject) {
           $.get({
             url: NEWS_ID_LIST_URL,
             success: function (data) {
-              console.log(`dataInget:${data}`);
               resolve(data);
             }
           })
         })
       };
 
-      function getNewsDetail (id) {
+      function getNewsDetail(id) {
         return new Promise(function (resolve, reject) {
           $.get({
             url: NEWS_URL + id + '.json',
             success: function (data) {
-              console.log(`dataInDetail:${data}`);
-              console.log(id);
               resolve(data);
             }
           });
