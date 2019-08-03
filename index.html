@@ -1,0 +1,188 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>HACKER NEWS</title>
+  <style>
+    * {
+      font-family: sans-serif;
+    }
+
+    #menu {
+      background-color: black;
+      height: 30px;
+      line-height: 30px;
+      color: white;
+      font-size: 20px;
+      font-weight: 900;
+      padding-left: 16px;
+    }
+
+    #news-ol {
+      background-color: #F6F6EF;
+      margin: 0;
+    }
+
+    .news-list {
+      padding: 10px;
+      font-size: 20px;
+      height: 30px;
+      border-bottom: 1px solid black;
+    }
+
+    a {
+      text-decoration: none;
+      color: #333;
+    }
+
+    a:visited {
+      color: #aaa;
+    }
+
+    #btn-wrapper {
+      background-color: #F6F6EF;
+      height: 50px;
+      padding-left: 40px;
+    }
+
+    #more-btn {
+      background-color: #F6F6EF;
+      border: none;
+      font-size: 20px;
+      padding: 10px;
+      height: 30px;
+    }
+
+    #footer {
+      height: 100px;
+      background-color: #F6F6EF;
+      border-top: 3px solid black;
+      text-align: center;
+      padding: 30px;
+    }
+
+    span {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="menu">Hacker News</div>
+  <ol id="news-ol">
+    <!-- <li class="news-list"><a href="">The Moon is older than previously believed</a></li>
+    <li class="news-list"><a href="">A $5,600 Electric Makeover for Old Diesel Cars</a></li>
+    <li class="news-list"><a href="">National Australia Bank compromises thousands of customer details</a></li>
+    <li class="news-list"><a href="">The Moon is older than previously believed</a></li>
+    <li class="news-list"><a href="">A $5,600 Electric Makeover for Old Diesel Cars</a></li>
+    <li class="news-list"><a href="">National Australia Bank compromises thousands of customer details</a></li>
+    <li class="news-list"><a href="">The Moon is older than previously believed</a></li>
+    <li class="news-list"><a href="">A $5,600 Electric Makeover for Old Diesel Cars</a></li>
+    <li class="news-list"><a href="">National Australia Bank compromises thousands of customer details</a></li>
+    <li class="news-list"><a href="">The Moon is older than previously believed</a></li>
+    <li class="news-list"><a href="">A $5,600 Electric Makeover for Old Diesel Cars</a></li>
+    <li class="news-list"><a href="">National Australia Bank compromises thousands of customer details</a></li>
+    <li class="news-list">Electron 6.0.0 - 마지막 10번째 뉴스</li> -->
+  </ol>
+  <div id="btn-wrapper">
+    <button id="more-btn">More 10 NEWS</button>
+  </div>
+  <div id="footer">
+    <span id="date"></span>
+    <span>2019/8/3</span>
+  </div>
+
+  <script src="http://code.jquery.com/jquery-3.1.0.js"></script>
+  <script>
+    const NEWS_ID_LIST_URL = "https://hacker-news.firebaseio.com/v0/topstories.json"
+    const NEWS_URL = "https://hacker-news.firebaseio.com/v0/item/"
+    const $ol = document.querySelector('#news-ol');
+    const $moreBtn = document.querySelector('#more-btn');
+    const IdObjArr = [];
+    const $date = document.querySelector('#date');
+    const newsNumController = {
+      start: 0,
+      numberOfNEWS: 10,
+      getNextStart: function () {
+        newsNumController.start += newsNumController.numberOfNEWS;
+        newsNumController.end += newsNumController.numberOfNEWS;
+      }
+    };
+  
+    $date.textContent = `${Date()}`;
+
+    function getNews(start, end) {
+      let getNewsIDList = () => {
+        return new Promise(function (resolve, reject) {
+          $.get({
+            url: NEWS_ID_LIST_URL,
+            success: function (data) {
+              console.log(`dataInget:${data}`);
+              resolve(data);
+            }
+          })
+        })
+      };
+
+      function getNewsDetail (id) {
+        return new Promise(function (resolve, reject) {
+          $.get({
+            url: NEWS_URL + id + '.json',
+            success: function (data) {
+              console.log(`dataInDetail:${data}`);
+              console.log(id);
+              resolve(data);
+            }
+          });
+        });
+      };
+
+      function visualize(obj) {
+        let $newLi = document.createElement('li');
+        let $newA = document.createElement('a');
+        $newLi.className = 'news-list';
+        $newA.textContent = obj.title;
+        $newA.href = obj.url;
+        $ol.appendChild($newLi);
+        $newLi.appendChild($newA);
+      };
+
+      getNewsIDList().then(ids => {
+        slicedIds = ids.slice(start, end);
+        return slicedIds;
+      }).then(slicedIds => {
+        for (var i = 0; i < slicedIds.length; i++) {
+          IdObjArr[i] = getNewsDetail(slicedIds[i]).then((data) => {
+            return { title: data.title, url: data.url };
+          });
+        }
+        Promise.all(IdObjArr).then(value => { // 'Promise.all'이 각 promise의 executor를 순차실행하는 건 아니에요. 각 프라미스가 순차적으로 리졸브 되는것도 아니구요
+          value.forEach(el => visualize(el));
+        });
+      });
+    }
+
+    function clearNews() {
+      $ol.innerHTML = '';
+    }
+
+    function getNewOrderNumber() {
+      $ol.start = newsNumController.start + 1;
+    }
+
+    newsNumController.end = newsNumController.start + newsNumController.numberOfNEWS;
+    getNews(0, 10);
+
+    $moreBtn.addEventListener('click', () => {
+      clearNews();
+      newsNumController.getNextStart();
+      getNewOrderNumber();
+      getNews(newsNumController.start, newsNumController.end);
+    });
+
+  </script>
+</body>
+
+</html>
